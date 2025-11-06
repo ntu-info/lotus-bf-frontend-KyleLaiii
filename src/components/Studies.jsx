@@ -1,16 +1,15 @@
-import { API_BASE } from '../api'
 import { useEffect, useMemo, useState } from 'react'
+import { API_BASE } from '../api'
+import './Studies.css'
 
-function classNames (...xs) { return xs.filter(Boolean).join(' ') }
-
-export function Studies ({ query }) {
+export function Studies({ query }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [sortKey, setSortKey] = useState('year')
-  const [sortDir, setSortDir] = useState('desc') // 'asc' | 'desc'
+  const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(1)
-  const pageSize = 20
+  const pageSize = 12 // Changed to 12 for better grid layout
 
   useEffect(() => { setPage(1) }, [query])
 
@@ -65,9 +64,13 @@ export function Studies ({ query }) {
     <div className='flex flex-col rounded-2xl border'>
       <div className='flex items-center justify-between p-3'>
         <div className='card__title'>Studies</div>
-        <div className='text-sm text-gray-500'>
-           {/* {query ? `Query: ${query}` : 'Query: (empty)'} */}
-        </div>
+        <button
+          className='sort-button'
+          onClick={() => changeSort('year')}
+          title='Click to change sort order'
+        >
+          {sortDir === 'desc' ? '舊 → 新' : '新 → 舊'}
+        </button>
       </div>
 
 
@@ -86,54 +89,55 @@ export function Studies ({ query }) {
       )}
 
       {query && !loading && !err && (
-        <div className='overflow-auto'>
-          <table className='min-w-full text-sm'>
-            <thead className='sticky top-0 bg-gray-50 text-left'>
-              <tr>
-                {[
-                  { key: 'year', label: 'Year' },
-                  { key: 'journal', label: 'Journal' },
-                  { key: 'title', label: 'Title' },
-                  { key: 'authors', label: 'Authors' }
-                ].map(({ key, label }) => (
-                  <th key={key} className='cursor-pointer px-3 py-2 font-semibold' onClick={() => changeSort(key)}>
-                    <span className='inline-flex items-center gap-2'>
-                      {label}
-                      <span className='text-xs text-gray-500'>{sortKey === key ? (sortDir === 'asc' ? '▲' : '▼') : ''}</span>
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+        <div className='studies-content'>
+          <div className='studies-results'>
+            <div className='studies-grid'>
               {pageRows.length === 0 ? (
-                <tr><td colSpan={4} className='px-3 py-4 text-gray-500'>No data</td></tr>
+                <div className='no-results'>No studies found</div>
               ) : (
-                pageRows.map((r, i) => (
-                  <tr key={i} className={classNames(i % 2 ? 'bg-white' : 'bg-gray-50')}>
-                    <td className='whitespace-nowrap px-3 py-2 align-top'>{r.year ?? ''}</td>
-                    <td className='px-3 py-2 align-top'>{r.journal || ''}</td>
-                    <td className='max-w-[540px] px-3 py-2 align-top'><div className='truncate' title={r.title}>{r.title || ''}</div></td>
-                    <td className='px-3 py-2 align-top'>{r.authors || ''}</td>
-                  </tr>
+                pageRows.map((study, i) => (
+                  <div key={i} className='study-card'>
+                    <h4 className='study-title'>{study.title || 'Untitled Study'}</h4>
+                    <p className='study-authors'>{study.authors || 'Unknown Authors'}</p>
+                    <div className='study-meta'>
+                      <span className='journal'>{study.journal || 'No Journal'}</span>
+                      <span className='meta-separator'>|</span>
+                      <span className='year'>{study.year || 'No Year'}</span>
+                      {study.study_id && (
+                        <>
+                          <span className='meta-separator'>|</span>
+                          <a
+                            className='pubmed-link'
+                            href={`https://pubmed.ncbi.nlm.nih.gov/${study.study_id}/`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                          >
+                            PubMed
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+          </div>
 
-      {query && !loading && !err && (
-        <div className='flex items-center justify-between border-t p-3 text-sm'>
-          <div>Total <b>{sorted.length}</b> records, page <b>{page}</b>/<b>{totalPages}</b></div>
-          <div className='flex items-center gap-2'>
-            <button disabled={page <= 1} onClick={() => setPage(1)} className='rounded-lg border px-2 py-1 disabled:opacity-40'>⏮</button>
-            <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className='rounded-lg border px-2 py-1 disabled:opacity-40'>Previous</button>
-            <button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className='rounded-lg border px-2 py-1 disabled:opacity-40'>Next</button>
-            <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className='rounded-lg border px-2 py-1 disabled:opacity-40'>⏭</button>
+          {/* 左下角：總筆數 & 目前頁 */}
+          <div className="pagination-info-inline">
+            Total <b>{sorted.length}</b> records, page <b>{page}</b>/<b>{totalPages}</b>
+          </div>
+
+          {/* 右下角：四顆分頁按鈕 */}
+          <div className="pagination-inline">
+            <button disabled={page <= 1} onClick={() => setPage(1)} className='page-button'>⏮</button>
+            <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))} className='page-button'>Previous</button>
+            <button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className='page-button'>Next</button>
+            <button disabled={page >= totalPages} onClick={() => setPage(totalPages)} className='page-button'>⏭</button>
           </div>
         </div>
       )}
+
     </div>
   )
 }

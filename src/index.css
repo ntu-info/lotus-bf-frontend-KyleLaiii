@@ -1,3 +1,12 @@
+/* 放在 index.css 的最上方 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+/* 全站預設字體 */
+:root {
+  --font-sans: 'Inter', 'Noto Sans TC', 'Helvetica Neue', Arial, system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+}
+html, body { font-family: var(--font-sans); }
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -5,7 +14,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #d9dfe8ff;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -22,10 +31,12 @@ a:hover {
   color: #535bf2;
 }
 
+/* index.css */
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* 移除這兩行： */
+  /* display: flex; */
+  /* place-items: center; */
   min-width: 320px;
   min-height: 100vh;
 }
@@ -57,7 +68,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color: #d9dfe8ff;
   }
   a:hover {
     color: #747bff;
@@ -65,4 +76,12 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* 柔和冷色系，和 #93c5fd 的淺藍標題帶很合 */
+html, body {
+  height: 100%;
+}
+body {
+  background-color: #d9dfe8ff;   /* 你也可試 #f2f7ff 或 #eef2ff */
 }

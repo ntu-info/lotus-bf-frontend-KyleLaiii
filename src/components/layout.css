@@ -1,0 +1,194 @@
+.app-header {
+  background: #3b82f6;
+  color: white;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.app-header p {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* 調整主要內容區域 */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.app-content {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+/* 繼承原有的樣式並調整 */
+.app {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  height: calc(100vh - 120px); /* 調整高度以適應新的標題欄 */
+}
+
+.app__grid {
+  height: 100%;
+  display: flex;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* 原本大多會寫成 padding: 0 1rem; 這會左右都留 1rem */
+.app-body .columns {
+  padding-left: 0.5rem;   /* 左邊縮小 */
+  padding-right: 1rem;    /* 右邊維持 */
+  gap: 1rem;              /* 若還想更緊可以改成 0.75rem */
+}
+
+/* 卡片與小標題 */
+.card {
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+.card__subtitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.viewer-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:8px;
+}
+
+/* 主要按鈕（Download / Add to Query） */
+.btn-primary{
+   border:1px solid #bfd5ff;
+   background:#eef4ff;
+   color:#274690;
+   padding:8px 14px;
+   border-radius:10px;
+   font-weight:600;
+   cursor:pointer;
+ }
+
+.btn-primary:hover{ background:#e3edff; }
+
+.viewer-actions{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end; /* 讓內容靠右 */
+  gap:16px;
+  margin-top:14px;      /* 與三張圖留白 */
+}
+
+/* 類似 Percentile 的欄位樣式 */
+.field.vstack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field.vstack > span {
+  font-size: .9rem;
+  color: #374151;
+}
+.input {
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: .95rem;
+  background: #fff;
+}
+
+/* Overlay alpha：漸層條與滑桿 */
+.alpha-gradient {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    rgba(255,0,0,0.05) 0%,
+    rgba(255,0,0,0.10) 20%,
+    rgba(255,0,0,0.30) 40%,
+    rgba(255,0,0,0.55) 60%,
+    rgba(255,0,0,0.80) 80%,
+    rgba(255,0,0,1) 100%
+  );
+}
+
+/* 自訂 range 外觀（含圓角軌道、圓形滑塊） */
+.alpha-range{
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:10px; border-radius:999px;
+  outline:none; border:1px solid #cfd7e6;
+  background:linear-gradient(90deg, rgba(255,0,0,0) 0%, rgba(255,0,0,1) 100%);
+}
+
+.alpha-range::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none;
+  width:18px; height:18px; border-radius:999px;
+  background:#1d4ed8; border:2px solid #fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.25); cursor:pointer;
+}
+
+.alpha-range::-moz-range-thumb{
+  width:18px; height:18px; border-radius:999px;
+  background:#1d4ed8; border:2px solid #fff;
+  box-shadow:0 1px 2px rgba(0,0,0,.25); cursor:pointer;
+}
+
+.alpha-bubble{
+  position:absolute; top:-28px; transform:translateX(-50%);
+  background:#111827; color:#fff; font-size:11px;
+  padding:2px 6px; border-radius:6px; white-space:nowrap;
+  pointer-events:none;
+}
+
+.alpha-row{ width:100%;}
+ .alpha-labels{
+  display:flex; justify-content:space-between;
+  font-size:12px; color:#6b7280; margin-bottom:6px;
+}
+
+.alpha-track-wrap{ position:relative; width:100%; }
+
+.gaussian-field{ width:100%; max-width:360px; }
+
+.ns-input{
+  height:40px; border-radius:10px; border:1px solid #cfd7e6;
+  padding:0 12px; font-size:14px; background:#fff;
+}
+
+.slice-title{
+  text-align:center; font-size:12px; color:#6b7280;
+  margin-top:6px; margin-bottom:6px;
+}
+
+.slice-wrap canvas{
+  height:128px; width:auto; display:block; margin:0 auto;
+}
+
+.xyz-inputs{ display:flex; gap:16px; margin-top:6px; margin-bottom:12px; }

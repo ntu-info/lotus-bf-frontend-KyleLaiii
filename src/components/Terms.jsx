@@ -1,11 +1,13 @@
 import { API_BASE } from '../api'
 import { useEffect, useMemo, useState } from 'react'
+import './Terms.css'  
 
 export function Terms ({ onPickTerm }) {
   const [terms, setTerms] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
+  const [displayCount, setDisplayCount] = useState(30) // 初始顯示30個
 
   useEffect(() => {
     let alive = true
@@ -38,57 +40,73 @@ export function Terms ({ onPickTerm }) {
 
   return (
     <div className='terms'>
-      {/* Removed internal <h2> to avoid double "Terms" header. The bold title now comes from App.jsx card__title. */}
-
       <div className='terms__controls'>
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder='Search terms…'
-          className='input'
-        />
-        <button
-          onClick={() => setSearch('')}
-          className='btn btn--primary'
-        >
-          Clear
-        </button>
+        <div className='search-box'>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='搜尋 Neurosynth 術語…'
+            className='search-input'
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className='clear-button'
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {loading && (
         <div className='terms__skeleton'>
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className='terms__skeleton-row' />
+            <div key={i} className='skeleton-item animate-pulse' />
           ))}
         </div>
       )}
 
       {err && (
-        <div className='alert alert--error'>
+        <div className='error-message'>
           {err}
         </div>
       )}
 
       {!loading && !err && (
-        <div className='terms__list'>
+        <div 
+          className='terms-container'
+          onScroll={(e) => {
+            const element = e.target;
+            if (element.scrollHeight - element.scrollTop <= element.clientHeight * 1.2) {
+              setDisplayCount(prev => Math.min(prev + 30, filtered.length));
+            }
+          }}
+        >
           {filtered.length === 0 ? (
-            <div className='terms__empty'>No terms found</div>
+            <div className='no-results'>No terms found</div>
           ) : (
-            <ul className='terms__ul'>
-              {filtered.slice(0, 500).map((t, idx) => (
-                <li key={`${t}-${idx}`} className='terms__li'>
-                  <a
-  href="#"
-  className='terms__name'
-  title={t}
-  aria-label={`Add term ${t}`}
-  onClick={(e) => { e.preventDefault(); onPickTerm?.(t); }}
->
-  {t}
-</a>
-                </li>
-              ))}
-            </ul>
+            <>
+              <div className='terms-cloud'>
+                <div className='terms-grid'>
+                  {filtered.slice(0, displayCount).map((t, idx) => (
+                    <button
+                      key={`${t}-${idx}`}
+                      className='term-chip'
+                      onClick={() => onPickTerm?.(t)}
+                      title={t}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {displayCount < filtered.length && (
+                <div className='load-more-indicator'>
+                  滾動以載入更多...
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

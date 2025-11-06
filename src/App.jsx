@@ -2,21 +2,29 @@
 import { useCallback, useRef, useState } from 'react'
 import { Terms } from './components/Terms'
 import { QueryBuilder } from './components/QueryBuilder'
+import  RelatedBox   from './components/RelatedBox'
 import { Studies } from './components/Studies'
 import { NiiViewer } from './components/NiiViewer'
 import { useUrlQueryState } from './hooks/useUrlQueryState'
 import './App.css'
+import './components/layout.css'
 
 export default function App () {
   const [query, setQuery] = useUrlQueryState('q')
+  const [lastPickedTerm, setLastPickedTerm] = useState('')
 
   const handlePickTerm = useCallback((t) => {
+    setLastPickedTerm(t)                          // 記住剛點的 term
     setQuery((q) => (q ? `${q} ${t}` : t))
+  }, [setQuery])
+
+  const appendToQuery = useCallback((token) => {
+    setQuery((q) => (q ? `${q} ${token}` : token))
   }, [setQuery])
 
   // --- resizable panes state ---
   const gridRef = useRef(null)
-  const [sizes, setSizes] = useState([28, 44, 28]) // [left, middle, right]
+  const [sizes, setSizes] = useState([20, 55, 25]) // [left, middle, right]
   const MIN_PX = 240
 
   const startDrag = (which, e) => {
@@ -57,121 +65,149 @@ export default function App () {
   }
 
   return (
-    <div className="app">
-      {/* Inline style injection to enforce no-hover look */}
-      <style>{`
-        :root {
-          --primary-600: #2563eb;
-          --primary-700: #1d4ed8;
-          --primary-800: #1e40af;
-          --border: #e5e7eb;
-        }
-        .app { padding-right: 0 !important; }
-        .app__grid { width: 100vw; max-width: 100vw; }
-        .card input[type="text"],
-        .card input[type="search"],
-        .card input[type="number"],
-        .card select,
-        .card textarea {
-          width: 100% !important;
-          max-width: 100% !important;
-          display: block;
-        }
-        /* Downsized buttons */
-        .card button,
-        .card [role="button"],
-        .card .btn,
-        .card .button {
-          font-size: 12px !important;
-          padding: 4px 8px !important;
-          border-radius: 8px !important;
-          line-height: 1.2 !important;
-          background: var(--primary-600) !important;
-          color: #fff !important;
-          border: none !important;
-        }
-        /* No visual change on hover/active */
-        .card button:hover,
-        .card button:active,
-        .card [role="button"]:hover,
-        .card [role="button"]:active,
-        .card .btn:hover,
-        .card .btn:active,
-        .card .button:hover,
-        .card .button:active {
-          background: var(--primary-600) !important;
-          color: #fff !important;
-        }
-        /* Toolbars / chips also no-hover */
-        .card .toolbar button,
-        .card .toolbar [role="button"],
-        .card .toolbar .btn,
-        .card .toolbar .button,
-        .card .qb-toolbar button,
-        .card .qb-toolbar [role="button"],
-        .card .qb-toolbar .btn,
-        .card .qb-toolbar .button,
-        .card .query-builder button,
-        .card .query-builder [role="button"],
-        .card .query-builder .btn,
-        .card .query-builder .button,
-        .card .chip,
-        .card .pill,
-        .card .tag {
-          background: var(--primary-600) !important;
-          color: #fff !important;
-          border: none !important;
-        }
-        .card .toolbar button:hover,
-        .card .qb-toolbar button:hover,
-        .card .query-builder button:hover,
-        .card .chip:hover,
-        .card .pill:hover,
-        .card .tag:hover,
-        .card .toolbar button:active,
-        .card .qb-toolbar button:active,
-        .card .query-builder button:active {
-          background: var(--primary-600) !important;
-          color: #fff !important;
-        }
-        /* Disabled stays same color but dimmer for affordance */
-        .card .toolbar button:disabled,
-        .card .qb-toolbar button:disabled,
-        .card .query-builder button:disabled,
-        .card button[disabled],
-        .card [aria-disabled="true"] {
-          background: var(--primary-600) !important;
-          color: #fff !important;
-          opacity: .55 !important;
-        }
-      `}</style>
-
-      <header className="app__header">
-        <h1 className="app__title">LoTUS-BF</h1>
-        <div className="app__subtitle">Location-or-Term Unified Search for Brain Functions</div>
+    <>
+      <header className="site-banner">
+        <div className="site-banner__inner">
+          <h1 className="site-banner__title">LoTUS-BF</h1>
+          <div className="site-banner__subtitle">
+            Location-or-Term Unified Search for Brain Functions
+          </div>
+        </div>
       </header>
+      <div className="app">
+        {/* Inline style injection to enforce no-hover look */}
+        <style>{`
+          :root {
+            --primary-600: #9ec6f8ff;
+            --primary-700: #3b82f6;
+            --primary-800: #2563eb;
+            --border: #e5e7eb;
+          }
+          .app { padding-right: 0 !important; }
+          .app__grid > .card {
+            flex: 1 1 0;
+            min-width: 200px;
+            overflow: auto;
+            height: 100%;               /* 關鍵：撐滿父層高度 */
+            display: flex;              /* 讓內部可彈性撐開 */
+            flex-direction: column;
+          }
+          .app__grid { padding-left: 0.1rem; }  /* 或 0 */
+          .app__grid > .card:first-child { 
+            margin-left: 0 !important; 
+            background: #f5f6f9ff;
+              
+          }
+          .card input[type="text"],
+          .card input[type="search"],
+          .card input[type="number"],
+          .card select,
+          .card textarea {
+            width: 100% !important;
+            max-width: 100% !important;
+            display: block;
+          }
+          /* Downsized buttons */
+          .card button:not(.term-chip),
+          .card [role="button"]:not(.term-chip),
+          .card .btn,
+          .card .button {
+            font-size: 12px !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+            line-height: 1.2 !important;
+            background: var(--primary-600) !important;
+            color: #fff !important;
+            border: none !important;
+          }
+          /* No visual change on hover/active */
+          .card button:hover,
+          .card button:active,
+          .card [role="button"]:hover,
+          .card [role="button"]:active,
+          .card .btn:hover,
+          .card .btn:active,
+          .card .button:hover,
+          .card .button:active {
+            background: var(--primary-600) !important;
+            color: #fff !important;
+          }
+          /* Toolbars / chips also no-hover */
+          .card .toolbar button,
+          .card .toolbar [role="button"],
+          .card .toolbar .btn,
+          .card .toolbar .button,
+          .card .qb-toolbar button,
+          .card .qb-toolbar [role="button"],
+          .card .qb-toolbar .btn,
+          .card .qb-toolbar .button,
+          .card .query-builder button,
+          .card .query-builder [role="button"],
+          .card .query-builder .btn,
+          .card .query-builder .button,
+          .card .chip,
+          .card .pill,
+          .card .tag {
+            background: var(--primary-600) !important;
+            color: #fff !important;
+            border: none !important;
+          }
+          .card .toolbar button:hover,
+          .card .qb-toolbar button:hover,
+          .card .query-builder button:hover,
+          .card .chip:hover,
+          .card .pill:hover,
+          .card .tag:hover,
+          .card .toolbar button:active,
+          .card .qb-toolbar button:active,
+          .card .query-builder button:active {
+            background: var(--primary-600) !important;
+            color: #fff !important;
+          }
+          /* Disabled stays same color but dimmer for affordance */
+          .card .toolbar button:disabled,
+          .card .qb-toolbar button:disabled,
+          .card .query-builder button:disabled,
+          .card button[disabled],
+          .card [aria-disabled="true"] {
+            background: var(--primary-600) !important;
+            color: #fff !important;
+            opacity: .55 !important;
+          }
+        `}</style>
 
-      <main className="app__grid" ref={gridRef}>
-        <section className="card" style={{ flexBasis: `${sizes[0]}%` }}>
-          <div className="card__title">Terms</div>
-          <Terms onPickTerm={handlePickTerm} />
-        </section>
+        <main className="app__grid" ref={gridRef}>
+          <section className="card" style={{ flexBasis: `${sizes[0]}%` }}>
+            <Terms onPickTerm={handlePickTerm} />
+          </section>
 
-        <div className="resizer" aria-label="Resize left/middle" onMouseDown={(e) => startDrag(0, e)} />
+          <div className="resizer" aria-label="Resize left/middle" onMouseDown={(e) => startDrag(0, e)} />
 
-        <section className="card card--stack" style={{ flexBasis: `${sizes[1]}%` }}>
-          <QueryBuilder query={query} setQuery={setQuery} />
-          {/* <div className="hint">Current Query：<code className="hint__code">{query || '(empty)'}</code></div> */}
-          <div className="divider" />
-          <Studies query={query} />
-        </section>
+          <section
+            className="col"
+            style={{ flexBasis: `${sizes[1]}%`, display: 'flex', flexDirection: 'column', gap: '12px' }}
+          >
+            <div className="subcard">
+              <QueryBuilder query={query} setQuery={setQuery} />
+            </div>
+            
+            {/* 新增的 Related 盒，吃到 lastPickedTerm 與 query */}
+            <div className="subcard">
+              <RelatedBox lastPickedTerm={lastPickedTerm} query={query} />
+            </div>
 
-        <div className="resizer" aria-label="Resize middle/right" onMouseDown={(e) => startDrag(1, e)} />
+            <div className="subcard">
+              <Studies query={query} />
+            </div>
+          </section>
 
-        <section className="card" style={{ flexBasis: `${sizes[2]}%` }}>
-          <NiiViewer query={query} />
-        </section>
-      </main>
-    </div>
+          <div className="resizer" aria-label="Resize middle/right" onMouseDown={(e) => startDrag(1, e)} />
+
+          <section className="card" style={{ flexBasis: `${sizes[2]}%` }}>
+            <NiiViewer query={query} appendToQuery={appendToQuery} />
+          </section>
+        </main>
+      </div>
+    </>
   )
 }

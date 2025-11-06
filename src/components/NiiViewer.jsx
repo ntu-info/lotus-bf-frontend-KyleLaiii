@@ -1,4 +1,3 @@
-
 // 顯示設定：讓 x>0 出現在畫面右側（右腦在右）
 const X_RIGHT_ON_SCREEN_RIGHT = true;
 
@@ -18,7 +17,7 @@ function isStandardMNI2mm(dims, voxelMM) {
 // x = -2*i + 90;  y = 2*j - 126;  z = 2*k - 72
 const MNI2MM = { x0: 90, y0: -126, z0: -72, vx: 2, vy: 2, vz: 2 };
 
-export function NiiViewer({ query }) {
+export function NiiViewer({ query, appendToQuery }) {
   const [loadingBG, setLoadingBG] = useState(false)
   const [loadingMap, setLoadingMap] = useState(false)
   const [errBG, setErrBG] = useState('')
@@ -152,7 +151,7 @@ export function NiiViewer({ query }) {
     const mmPerVoxel = axis === 'x' ? vx : axis === 'y' ? vy : vz;
     return AXIS_SIGN[axis] * (i - Math.floor(n/2)) * mmPerVoxel;
   }
-const coord2idx = (c_mm, n, axis) => {
+  const coord2idx = (c_mm, n, axis) => {
     const [nx, ny, nz] = dims;
     const { x: vx, y: vy, z: vz } = getVoxelMM();
     const isStd = isStandardMNI2mm([nx, ny, nz], [vx, vy, vz]);
@@ -170,6 +169,7 @@ const coord2idx = (c_mm, n, axis) => {
     const idx = Math.round(v);
     return Math.max(0, Math.min(n-1, idx));
   }
+
   // load background on mount
   useEffect(() => {
     let alive = true
@@ -197,7 +197,6 @@ const coord2idx = (c_mm, n, axis) => {
     return () => { alive = false }
   }, [])
 
-  
   // keep thrValue within current map range when map changes
   useEffect(() => {
     const mn = mapRef.current?.min ?? 0
@@ -207,7 +206,7 @@ const coord2idx = (c_mm, n, axis) => {
     }
   }, [mapRef.current, dims])
 
-// load meta-analytic map when query/params change
+  // load meta-analytic map when query/params change
   useEffect(() => {
     if (!mapUrl) { mapRef.current = null; return }
     let alive = true
@@ -387,61 +386,81 @@ const coord2idx = (c_mm, n, axis) => {
 
   const [nx, ny, nz] = dims
 
-  // slice configs (labels only; numbers removed)
+  // === 改成 X → Y → Z 的顯示順序（canvasRef 要對應 redraw 裡的 c2/x、c1/y、c0/z） ===
   const sliceConfigs = [
-    { key: 'y', name: 'Coronal',  axisLabel: 'Y', index: iy, setIndex: setIy, max: Math.max(0, ny-1), canvasRef: canvases[1] },
     { key: 'x', name: 'Sagittal', axisLabel: 'X', index: ix, setIndex: setIx, max: Math.max(0, nx-1), canvasRef: canvases[2] },
+    { key: 'y', name: 'Coronal',  axisLabel: 'Y', index: iy, setIndex: setIy, max: Math.max(0, ny-1), canvasRef: canvases[1] },
     { key: 'z', name: 'Axial',    axisLabel: 'Z', index: iz, setIndex: setIz, max: Math.max(0, nz-1), canvasRef: canvases[0] },
   ]
 
-  // shared small input styles to mimic Neurosynth (compact bordered boxes)
-  const nsInputCls = 'w-16 rounded border border-gray-400 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-gray-400'
-  const nsLabelCls = 'mr-1 text-sm'
-
   return (
     <div className='flex flex-col gap-3'>
-      <div className='flex items-center justify-between'>
-        <div className='card__title'>NIfTI Viewer</div>
-        <div className='flex items-center gap-2 text-sm text-gray-500'>
-          {query && <a href={mapUrl} className='rounded-lg border px-2 py-1 text-xs hover:bg-gray-50'>Download map</a>}
-        </div>
+      <div className="viewer-header">
+        <div className="card__title">NIfTI Viewer</div>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            const token = `[${cx},${cy},${cz}]`;
+            appendToQuery?.(token);
+          }}
+          title="把目前座標加入中間的 Query"
+        >
+          Add [x,y,z] to Query
+        </button>
       </div>
 
-      {/* --- Threshold mode & value --- */}
+      {/* --- Threshold mode & coords --- */}
       <div className='rounded-xl border p-3 text-sm'>
-        <label className='flex items-center gap-2'>
-          <span>Threshold mode</span>
-          <select value={thrMode} onChange={e=>setThrMode(e.target.value)} className='rounded-lg border px-2 py-1'>
-            <option value='value'>Value</option>
-            <option value='pctl'>Percentile</option>
-          </select>
-        </label>
-        <br />
+        {/* Segmented toggle */}
+        <div className='segmented' role='tablist' aria-label='Threshold mode'>
+          <button
+            role='tab'
+            aria-selected={thrMode === 'pctl'}
+            data-active={thrMode === 'pctl'}
+            onClick={() => setThrMode('pctl')}
+          >
+            Percentile
+          </button>
+          <button
+            role='tab'
+            aria-selected={thrMode === 'value'}
+            data-active={thrMode === 'value'}
+            onClick={() => setThrMode('value')}
+          >
+            Value
+          </button>
+        </div>
+
+        {/* 對應的輸入欄位 */}
         {thrMode === 'value' ? (
-          <>
-            <label className='flex items-center gap-2'>
-              <span>Threshold</span>
-              <input type='number' step='0.01' value={thrValue} onChange={e=>setThrValue(Number(e.target.value))} className='w-28 rounded-lg border px-2 py-1' />
-            </label>
-            <br />
-          </>
+          <label className='field vstack'>
+            <span>Threshold</span>
+            <input
+              type='number'
+              step='0.01'
+              value={thrValue}
+              onChange={e => setThrValue(Number(e.target.value))}
+            />
+          </label>
         ) : (
-          <>
-            <label className='flex items-center gap-2'>
-              <span>Percentile</span>
-              <input type='number' min={50} max={99.9} step={0.5} value={pctl} onChange={e=>setPctl(Number(e.target.value)||95)} className='w-24 rounded-lg border px-2 py-1' />
-            </label>
-            <br />
-          </>
+          <label className='field vstack'>
+            <span>Percentile</span>
+            <input
+              type='number'
+              min={50}
+              max={99.9}
+              step={0.5}
+              value={pctl}
+              onChange={e => setPctl(Number(e.target.value) || 95)}
+            />
+          </label>
         )}
 
-        {/* Neurosynth-style coordinate inputs (signed, centered at 0) */}
-        <div className='mt-1 flex items-center gap-4'>
-          <label className='flex items-center'>
-            <span className={nsLabelCls}>X (mm):</span>
+        {/* X / Y / Z 三欄「上標籤、下輸入框」 */}
+        <div className='coord-grid coord-grid--spaced'>
+          <label className='field vstack'>X (mm)
             <input
               type='text' inputMode='decimal' pattern='-?[0-9]*([.][0-9]+)?'
-              className={nsInputCls}
               value={cx}
               onChange={e=>setCx(e.target.value)}
               onBlur={()=>commitCoord('x')}
@@ -449,11 +468,9 @@ const coord2idx = (c_mm, n, axis) => {
               aria-label='X coordinate (centered)'
             />
           </label>
-          <label className='flex items-center'>
-            <span className={nsLabelCls}>Y (mm):</span>
+          <label className='field vstack'>Y (mm)
             <input
               type='text' inputMode='decimal' pattern='-?[0-9]*([.][0-9]+)?'
-              className={nsInputCls}
               value={cy}
               onChange={e=>setCy(e.target.value)}
               onBlur={()=>commitCoord('y')}
@@ -461,11 +478,9 @@ const coord2idx = (c_mm, n, axis) => {
               aria-label='Y coordinate (centered)'
             />
           </label>
-          <label className='flex items-center'>
-            <span className={nsLabelCls}>Z (mm):</span>
+          <label className='field vstack'>Z (mm)
             <input
               type='text' inputMode='decimal' pattern='-?[0-9]*([.][0-9]+)?'
-              className={nsInputCls}
               value={cz}
               onChange={e=>setCz(e.target.value)}
               onBlur={()=>commitCoord('z')}
@@ -492,33 +507,69 @@ const coord2idx = (c_mm, n, axis) => {
       )}
 
       {!!nx && (
-        <div className='grid grid-cols-3 gap-3' style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
-          {sliceConfigs.map(({ key, name, axisLabel, index, setIndex, max, canvasRef }) => (
-            <div key={key} className='flex flex-col gap-2'>
-              <div className='text-xs text-gray-600'>{name} ({axisLabel})</div>
-              <div className='flex items-center gap-2'>
-                <canvas ref={canvasRef} className='h-64 w-full rounded-xl border' onClick={(e)=>onCanvasClick(e, key)} style={{ cursor: 'crosshair' }} />
-              </div>
+        <div className="slices-grid">
+          {sliceConfigs.map(({ key, name, axisLabel, canvasRef }) => (
+            <div key={key} className="slice-cell">
+              <div className="slice-label">{name} ({axisLabel})</div>
+              <canvas
+                ref={canvasRef}
+                className="nii-slice"
+                onClick={(e) => onCanvasClick(e, key)}
+                style={{ cursor: 'crosshair' }}
+              />
             </div>
           ))}
         </div>
       )}
 
-      {/* map generation params */}
-      <div className='rounded-xl border p-3 text-sm'>
-        <label className='flex flex-col'>Gaussian FWHM:
-          <input type='number' step='0.5' value={fwhm} onChange={e=>setFwhm(Number(e.target.value)||0)} className='w-28 rounded-lg border px-2 py-1'/>
-          <br />
-        </label>
-      </div>
+      <div className="viewer-actions">
+        <button
+          className="btn-primary"
+          disabled={!mapUrl}
+          onClick={() => { if (mapUrl) window.open(mapUrl, '_blank'); }}
+        >
+          Download map
+        </button>
 
-      {/* overlay controls */}
-      <div className='rounded-xl border p-3 text-sm'>
-        <label className='flex items-center gap-2'>
-          <span>Overlay alpha</span>
-          <input type='range' min={0} max={1} step={0.05} value={overlayAlpha} onChange={e=>setOverlayAlpha(Number(e.target.value))} className='w-40' />
+        <div className="alpha-row">
+          <div className="card__subtitle">Overlay Alpha</div>
+          <div className="alpha-labels">
+            <span>Transparent</span>
+            <span>Opaque</span>
+          </div>
+          <div className="alpha-track-wrap">
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={overlayAlpha}
+              onChange={(e)=>setOverlayAlpha(Number(e.target.value))}
+              className="alpha-range"
+              style={{
+                background: `linear-gradient(90deg, rgba(255,0,0,0) 0%, rgba(255,0,0,1) 100%)`,
+              }}
+            />
+            <div
+              className="alpha-bubble"
+              style={{ left: `${overlayAlpha * 100}%` }}
+            >
+              {Math.round(overlayAlpha * 100)}%
+            </div>
+          </div>
+        </div>
+
+        <label className="field vstack gaussian-field">
+          <span>Gaussian FWHM</span>
+          <input
+            type="number"
+            step="0.5"
+            value={fwhm}
+            onChange={(e)=>setFwhm(Number(e.target.value)||0)}
+            className="ns-input"
+            placeholder="e.g. 10"
+          />
         </label>
-        <br />
       </div>
     </div>
   )
